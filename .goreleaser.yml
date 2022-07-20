@@ -1,0 +1,49 @@
+
+builds:
+
+- id: ardconv
+  main: ./ardconv
+  binary: ardconv
+  goarch:
+  - amd64
+  goos:
+  - linux
+  - darwin
+  - windows
+  ldflags:
+  - -X 'github.com/tliron/kutil/version.GitVersion={{.Env.VERSION}}'
+  - -X 'github.com/tliron/kutil/version.GitRevision={{.Env.REVISION}}'
+  - -X 'github.com/tliron/kutil/version.Timestamp={{.Env.TIMESTAMP}}'
+
+nfpms:
+
+- formats:
+  - rpm
+  - deb
+  homepage: https://github.com/tliron/ardconv
+  maintainer: Tal Liron <tal.liron@gmail.com>
+  description: Utility to convert between various ARD formats
+  license: Apache 2.0
+
+archives:
+
+- files:
+  - README.md
+  - LICENSE
+
+  format_overrides:
+  - goos: windows
+    format: zip
+
+checksum:
+
+  name_template: checksums.txt
+
+release:
+
+  #disable: true
+  #prerelease: true
+
+  github:
+    owner: tliron
+    name: ardconv
