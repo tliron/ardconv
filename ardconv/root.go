@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/tliron/kutil/logging"
 	"github.com/tliron/kutil/terminal"
@@ -37,8 +39,11 @@ var rootCommand = &cobra.Command{
 	Use:   toolName,
 	Short: "Convert between ARD formats",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		err := terminal.ProcessColorizeFlag(colorize)
+		cleanup, err := terminal.ProcessColorizeFlag(colorize)
 		util.FailOnError(err)
+		if cleanup != nil {
+			util.OnExitError(cleanup)
+		}
 		if logTo == "" {
 			if terminal.Quiet {
 				verbose = -4
@@ -80,6 +85,6 @@ func Convert() {
 	value, _, err := urlpkg.ReadARD(url, false)
 	util.FailOnError(err)
 
-	err = transcribe.WriteOrPrint(value, outputFormat, terminal.Stdout, strict, pretty, outputPath)
+	err = transcribe.WriteOrPrint(value, outputFormat, os.Stdout, strict, pretty, outputPath)
 	util.FailOnError(err)
 }

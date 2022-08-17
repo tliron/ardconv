@@ -8,9 +8,9 @@ ardconv
 Utility to convert between these [ARD (Agnostic Raw Data)](https://github.com/tliron/kutil/blob/main/ard/README.md) formats:
 
 * YAML
-* JSON
-* Compatible JSON
-* Compatible XML
+* Lossy JSON
+* JSON with an ARD-compatible schema
+* XML with an ARD-compatible schema
 * CBOR
 * MessagePack
 
