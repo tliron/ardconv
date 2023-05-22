@@ -4,10 +4,10 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/tliron/kutil/logging"
+	"github.com/tliron/commonlog"
+	"github.com/tliron/exturl"
 	"github.com/tliron/kutil/terminal"
 	"github.com/tliron/kutil/transcribe"
-	urlpkg "github.com/tliron/kutil/url"
 	"github.com/tliron/kutil/util"
 )
 
@@ -48,9 +48,9 @@ var rootCommand = &cobra.Command{
 			if terminal.Quiet {
 				verbose = -4
 			}
-			logging.Configure(verbose, nil)
+			commonlog.Configure(verbose, nil)
 		} else {
-			logging.Configure(verbose, &logTo)
+			commonlog.Configure(verbose, &logTo)
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -68,21 +68,21 @@ func Execute() {
 }
 
 func Convert() {
-	urlContext := urlpkg.NewContext()
+	urlContext := exturl.NewContext()
 	util.OnExitError(urlContext.Release)
 
-	var url urlpkg.URL
+	var url exturl.URL
 	var err error
 	if inputUrl == "" {
 		log.Info("parsing stdin")
-		url, err = urlpkg.ReadToInternalURLFromStdin(inputFormat)
+		url, err = exturl.ReadToInternalURLFromStdin(inputFormat, urlContext)
 	} else {
 		log.Infof("parsing %q", inputUrl)
-		url, err = urlpkg.NewValidURL(inputUrl, nil, urlContext)
+		url, err = exturl.NewValidURL(inputUrl, nil, urlContext)
 	}
 	util.FailOnError(err)
 
-	value, _, err := urlpkg.ReadARD(url, false)
+	value, _, err := exturl.ReadARD(url, false)
 	util.FailOnError(err)
 
 	err = transcribe.WriteOrPrint(value, outputFormat, os.Stdout, strict, pretty, outputPath)
