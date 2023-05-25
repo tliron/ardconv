@@ -1,11 +1,13 @@
 package main
 
 import (
+	contextpkg "context"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/tliron/commonlog"
 	"github.com/tliron/exturl"
+	"github.com/tliron/go-ard"
 	"github.com/tliron/kutil/terminal"
 	"github.com/tliron/kutil/transcribe"
 	"github.com/tliron/kutil/util"
@@ -58,7 +60,7 @@ var rootCommand = &cobra.Command{
 			outputFormat = inputFormat
 		}
 
-		Convert()
+		Convert(contextpkg.TODO())
 	},
 }
 
@@ -67,7 +69,7 @@ func Execute() {
 	util.FailOnError(err)
 }
 
-func Convert() {
+func Convert(context contextpkg.Context) {
 	urlContext := exturl.NewContext()
 	util.OnExitError(urlContext.Release)
 
@@ -75,14 +77,14 @@ func Convert() {
 	var err error
 	if inputUrl == "" {
 		log.Info("parsing stdin")
-		url, err = exturl.ReadToInternalURLFromStdin(inputFormat, urlContext)
+		url, err = urlContext.ReadToInternalURLFromStdin(context, inputFormat)
 	} else {
 		log.Infof("parsing %q", inputUrl)
-		url, err = exturl.NewValidURL(inputUrl, nil, urlContext)
+		url, err = urlContext.NewValidURL(context, inputUrl, nil)
 	}
 	util.FailOnError(err)
 
-	value, _, err := exturl.ReadARD(url, false)
+	value, _, err := ard.ReadURL(context, url, false)
 	util.FailOnError(err)
 
 	err = transcribe.WriteOrPrint(value, outputFormat, os.Stdout, strict, pretty, outputPath)
