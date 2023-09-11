@@ -9,7 +9,6 @@ import (
 	"github.com/tliron/exturl"
 	"github.com/tliron/go-ard"
 	"github.com/tliron/kutil/terminal"
-	"github.com/tliron/kutil/transcribe"
 	"github.com/tliron/kutil/util"
 )
 
@@ -30,8 +29,8 @@ func init() {
 
 	rootCommand.Flags().StringVarP(&inputUrl, "input-url", "i", "", "input URL (when empty will read from stdin)")
 	rootCommand.Flags().StringVarP(&outputPath, "output-url", "o", "", "output path (when empty will write to stdout)")
-	rootCommand.Flags().StringVarP(&inputFormat, "input-format", "n", "yaml", "force input format (\"yaml\", \"json\", \"cjson\", \"xml\", \"cbor\", or \"messagepack\")")
-	rootCommand.Flags().StringVarP(&outputFormat, "output-format", "f", "", "force output format (\"yaml\", \"json\", \"cjson\", \"xml\", \"cbor\", \"messagepack\", or \"go\")")
+	rootCommand.Flags().StringVarP(&inputFormat, "input-format", "n", "yaml", "force input format (\"yaml\", \"json\", \"xjson\", \"xml\", \"cbor\", or \"messagepack\")")
+	rootCommand.Flags().StringVarP(&outputFormat, "output-format", "f", "", "force output format (\"yaml\", \"json\", \"xjson\", \"xml\", \"cbor\", \"messagepack\", or \"go\")")
 	rootCommand.Flags().StringVarP(&colorize, "colorize", "z", "true", "colorize output (boolean or \"force\")")
 	rootCommand.Flags().BoolVarP(&strict, "strict", "y", false, "strict output (for \"yaml\" format only)")
 	rootCommand.Flags().BoolVarP(&pretty, "pretty", "p", true, "prettify output")
@@ -87,6 +86,6 @@ func Convert(context contextpkg.Context) {
 	value, _, err := ard.ReadURL(context, url, false)
 	util.FailOnError(err)
 
-	err = transcribe.WriteOrPrint(value, outputFormat, os.Stdout, strict, pretty, outputPath)
+	err = Transcriber().WriteOrPrint(value, os.Stdout, outputPath, outputFormat)
 	util.FailOnError(err)
 }
