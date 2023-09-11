@@ -5,7 +5,7 @@ ardconv
 [![Latest Release](https://img.shields.io/github/release/tliron/ardconv.svg)](https://github.com/tliron/ardconv/releases/latest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tliron/ardconv)](https://goreportcard.com/report/github.com/tliron/ardconv)
 
-Utility to convert between these [ARD (Agnostic Raw Data)](https://github.com/tliron/ard) formats:
+Utility to convert between these [ARD (Agnostic Raw Data)](https://github.com/tliron/go-ard) formats:
 
 * YAML
 * Lossy JSON
