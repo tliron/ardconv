@@ -11,7 +11,10 @@ var log = commonlog.GetLogger(toolName)
 
 func Transcriber() *transcribe.Transcriber {
 	return &transcribe.Transcriber{
-		Strict: strict,
-		Pretty: pretty,
+		File:        outputPath,
+		Format:      outputFormat,
+		ForTerminal: pretty,
+		Strict:      strict,
+		Base64:      base64,
 	}
 }

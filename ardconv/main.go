@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	util.ExitOnSIGTERM()
+	util.ExitOnSignals()
 	Execute()
 	util.Exit(0)
 }

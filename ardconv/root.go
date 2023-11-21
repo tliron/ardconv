@@ -2,7 +2,6 @@ package main
 
 import (
 	contextpkg "context"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/tliron/commonlog"
@@ -21,11 +20,13 @@ var outputFormat string
 var colorize string
 var strict bool
 var pretty bool
+var base64 bool
 
 func init() {
 	rootCommand.PersistentFlags().BoolVarP(&terminal.Quiet, "quiet", "q", false, "suppress output")
 	rootCommand.PersistentFlags().StringVarP(&logTo, "log", "l", "", "log to file (defaults to stderr)")
 	rootCommand.PersistentFlags().CountVarP(&verbose, "verbose", "v", "add a log verbosity level (can be used twice)")
+	rootCommand.PersistentFlags().BoolVarP(&commonlog.Trace, "trace", "", false, "add stack trace to log messages")
 
 	rootCommand.Flags().StringVarP(&inputUrl, "input-url", "i", "", "input URL (when empty will read from stdin)")
 	rootCommand.Flags().StringVarP(&outputPath, "output-url", "o", "", "output path (when empty will write to stdout)")
@@ -34,25 +35,15 @@ func init() {
 	rootCommand.Flags().StringVarP(&colorize, "colorize", "z", "true", "colorize output (boolean or \"force\")")
 	rootCommand.Flags().BoolVarP(&strict, "strict", "y", false, "strict output (for \"yaml\" format only)")
 	rootCommand.Flags().BoolVarP(&pretty, "pretty", "p", true, "prettify output")
+	rootCommand.PersistentFlags().BoolVarP(&base64, "base64", "", false, "output base64 (for \"cbor\", \"messagepack\" formats)")
 }
 
 var rootCommand = &cobra.Command{
 	Use:   toolName,
 	Short: "Convert between ARD formats",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		cleanup, err := terminal.ProcessColorizeFlag(colorize)
-		util.FailOnError(err)
-		if cleanup != nil {
-			util.OnExitError(cleanup)
-		}
-		if logTo == "" {
-			if terminal.Quiet {
-				verbose = -4
-			}
-			commonlog.Configure(verbose, nil)
-		} else {
-			commonlog.Configure(verbose, &logTo)
-		}
+		util.InitializeColorization(colorize)
+		commonlog.Initialize(verbose, logTo)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "" {
@@ -83,9 +74,13 @@ func Convert(context contextpkg.Context) {
 	}
 	util.FailOnError(err)
 
-	value, _, err := ard.ReadURL(context, url, false)
+	value, _, err := ard.ReadURL(context, url, inputFormat, true, false)
 	util.FailOnError(err)
 
-	err = Transcriber().WriteOrPrint(value, os.Stdout, outputPath, outputFormat)
-	util.FailOnError(err)
+	/*switch inputFormat {
+	case "":
+		value = ard.CopyMapsToStringMaps(value)
+	}*/
+
+	util.FailOnError(Transcriber().Write(value))
 }
