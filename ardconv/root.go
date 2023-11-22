@@ -2,22 +2,28 @@ package main
 
 import (
 	contextpkg "context"
+	"io"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/tliron/commonlog"
 	"github.com/tliron/exturl"
 	"github.com/tliron/go-ard"
+	"github.com/tliron/go-transcribe"
 	"github.com/tliron/kutil/terminal"
 	"github.com/tliron/kutil/util"
 )
 
 var logTo string
 var verbose int
+var colorize string
+
 var inputUrl string
 var outputPath string
 var inputFormat string
 var outputFormat string
-var colorize string
+var timeout float64
+
 var strict bool
 var pretty bool
 var base64 bool
@@ -30,12 +36,14 @@ func init() {
 
 	rootCommand.Flags().StringVarP(&inputUrl, "input-url", "i", "", "input URL (when empty will read from stdin)")
 	rootCommand.Flags().StringVarP(&outputPath, "output-url", "o", "", "output path (when empty will write to stdout)")
-	rootCommand.Flags().StringVarP(&inputFormat, "input-format", "n", "yaml", "force input format (\"yaml\", \"json\", \"xjson\", \"xml\", \"cbor\", or \"messagepack\")")
-	rootCommand.Flags().StringVarP(&outputFormat, "output-format", "f", "", "force output format (\"yaml\", \"json\", \"xjson\", \"xml\", \"cbor\", \"messagepack\", or \"go\")")
+	rootCommand.Flags().StringVarP(&inputFormat, "input-format", "n", "", "force input format (\"yaml\", \"json\", \"xjson\", \"xml\", \"cbor\", or \"messagepack\")")
+	rootCommand.Flags().StringVarP(&outputFormat, "output-format", "f", "", "output format (\"yaml\", \"json\", \"xjson\", \"xml\", \"cbor\", \"messagepack\", or \"go\")")
+	rootCommand.Flags().Float64VarP(&timeout, "timeout", "t", 0.0, "timeout in seconds (0 for no timeout)")
+
 	rootCommand.Flags().StringVarP(&colorize, "colorize", "z", "true", "colorize output (boolean or \"force\")")
 	rootCommand.Flags().BoolVarP(&strict, "strict", "y", false, "strict output (for \"yaml\" format only)")
 	rootCommand.Flags().BoolVarP(&pretty, "pretty", "p", true, "prettify output")
-	rootCommand.PersistentFlags().BoolVarP(&base64, "base64", "", false, "output base64 (for \"cbor\", \"messagepack\" formats)")
+	rootCommand.Flags().BoolVarP(&base64, "base64", "", false, "output base64 (for \"cbor\", \"messagepack\" formats)")
 }
 
 var rootCommand = &cobra.Command{
@@ -50,7 +58,14 @@ var rootCommand = &cobra.Command{
 			outputFormat = inputFormat
 		}
 
-		Convert(contextpkg.TODO())
+		context := contextpkg.Background()
+		if timeout != 0.0 {
+			var cancel contextpkg.CancelFunc
+			context, cancel = contextpkg.WithTimeout(contextpkg.Background(), time.Duration(timeout*float64(time.Second)))
+			defer cancel()
+		}
+
+		Convert(context)
 	},
 }
 
@@ -74,13 +89,30 @@ func Convert(context contextpkg.Context) {
 	}
 	util.FailOnError(err)
 
-	value, _, err := ard.ReadURL(context, url, inputFormat, true, false)
+	format := inputFormat
+	if format == "" {
+		format = url.Format()
+	}
+	if format == "" {
+		util.Fail("cannot determine input format; specify it explicitly with --input-format/-n")
+	}
+
+	var value ard.Value
+	var reader io.ReadCloser
+	reader, err = url.Open(context)
 	util.FailOnError(err)
+	reader = util.NewContextualReadCloser(context, reader)
+	value, _, err = ard.Read(reader, format, false)
+	util.FailOnError(err)
+	commonlog.CallAndLogWarning(reader.Close, "close reader", log)
 
-	/*switch inputFormat {
-	case "":
-		value = ard.CopyMapsToStringMaps(value)
-	}*/
+	transcriber := transcribe.Transcriber{
+		File:        outputPath,
+		Format:      outputFormat,
+		ForTerminal: pretty,
+		Strict:      strict,
+		Base64:      base64,
+	}
 
-	util.FailOnError(Transcriber().Write(value))
+	util.FailOnError(transcriber.Write(value))
 }
