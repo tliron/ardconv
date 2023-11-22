@@ -6,7 +6,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/tliron/commonlog v0.2.8
 	github.com/tliron/exturl v0.4.3
-	github.com/tliron/go-ard v0.2.15
+	github.com/tliron/go-ard v0.2.16
 	github.com/tliron/go-transcribe v0.3.3
 	github.com/tliron/kutil v0.3.11
 )
